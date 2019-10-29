@@ -1,0 +1,9 @@
+{
+  "inputs": [
+    "I like it",
+    "If your are testing locally, building the image is enough. But if you want to your updated image in SageMaker, you need to publish it to an ECR repository in your account. The ./scripts/publish.sh script makes that easy",
+    "This is very confusing, but I like it so much",
+    "This is very confusing, and it's hard to use"
+  ]
+}
+
