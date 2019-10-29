@@ -71,6 +71,7 @@ class InvocationResource(object):
         if hasattr(inference, 'handler'):
             _custom_handler = inference.handler
         elif hasattr(inference, 'input_handler') and hasattr(inference, 'output_handler'):
+            # this is the custom handler
             _custom_input_handler = inference.input_handler
             _custom_output_handler = inference.output_handler
         else:
@@ -103,6 +104,7 @@ class InvocationResource(object):
                           req.get_header('Accept') or DEFAULT_ACCEPT_HEADER,
                           req.content_length)
 
+        # use the full body
         data = req.stream
         return data, context
 
@@ -120,6 +122,7 @@ class InvocationResource(object):
         tfs_model_version = attributes.get('tfs-model-version')
         tfs_method = attributes.get('tfs-method', 'predict')
 
+        # where is it coming from?
         uri = 'http://localhost:{}/v1/models/{}'.format(port, tfs_model_name)
         if tfs_model_version:
             uri += '/versions/' + tfs_model_version

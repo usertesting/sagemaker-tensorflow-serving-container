@@ -169,6 +169,7 @@ class ServiceManager(object):
             return ""
 
     def _find_models(self):
+        # models are found here
         base_path = '/opt/ml/model'
         models = []
         for f in self._find_saved_model_files(base_path):
@@ -254,6 +255,7 @@ class ServiceManager(object):
     def _start_tfs(self):
         self._log_version('tensorflow_model_server --version', 'tensorflow version info:')
         tfs_config_path = '/sagemaker/model-config.cfg'
+        # this is where tensorflow_model_server start
         cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={} {}"\
             .format(self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path,
                     self._get_tfs_batching_args())
