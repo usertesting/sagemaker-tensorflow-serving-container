@@ -19,10 +19,12 @@ def input_handler(data, context):
         batch_ids, batch_mask, batch_seg = preprocessing(body["inputs"])
 
         return {
-                "input_ids": batch_ids,
-                "input_mask": batch_mask,
-                "input_type_ids": batch_seg
-            }
+                   "inputs": {
+                       "input_ids": batch_ids,
+                       "input_mask": batch_mask,
+                       "input_type_ids": batch_seg
+                   }
+                }
 
 def preprocessing(sentences):
     batch_ids = []
@@ -74,9 +76,13 @@ def preprocessing(sentences):
 #
 #     return output
 
-def output_handler():
-    #The label position: ["positive", "negative", "neutral"]
-    return None
+def output_handler(data, context):
+    if data.status_code != 200:
+        raise ValueError(data.content.decode('utf-8'))
+
+    response_content_type = context.accept_header
+    prediction = data.content
+    return prediction, response_content_type
 
 
 if __name__ == "__main__":
