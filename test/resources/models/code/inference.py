@@ -1,5 +1,4 @@
 from tokenization import *
-#from tensorflow.contrib.util import make_tensor_proto, make_ndarray
 import os, json
 
 vocab_fp = os.path.join(os.path.dirname(__file__), "vocab.txt")
@@ -16,17 +15,17 @@ def input_handler(data, context):
     """
     if context.request_content_type == 'application/json':
         body = json.loads(data.read().decode('utf-8'))
-        batch_ids, batch_mask, batch_seg = preprocessing(body["inputs"])
+        batch_ids, batch_mask, batch_seg = transform(body["inputs"])
 
-        return {
+        return json.dumps({
                    "inputs": {
                        "input_ids": batch_ids,
                        "input_mask": batch_mask,
                        "input_type_ids": batch_seg
                    }
-                }
+                })
 
-def preprocessing(sentences):
+def transform(sentences):
     batch_ids = []
     batch_mask = []
     batch_seg = []
@@ -57,24 +56,11 @@ def preprocessing(sentences):
         batch_mask.append(input_mask)
         batch_seg.append(segment_ids)
     return batch_ids, batch_mask, batch_seg
-    #pred = get_prediction(lang, batch_ids, batch_mask, batch_seg)
-    #return pred
 
-
-# def get_prediction(self, lang, ids, mask, typeids):
-#     request = predict_pb2.PredictRequest()
-#     request.model_spec.name = lang + "_sentiment"
-#     request.inputs['input_ids'].CopyFrom(
-#         make_tensor_proto(ids, shape=np.array(ids).shape))
-#     request.inputs['input_mask'].CopyFrom(
-#         make_tensor_proto(mask, shape=np.array(mask).shape))
-#     request.inputs['input_type_ids'].CopyFrom(
-#         make_tensor_proto(typeids, shape=np.array(typeids).shape))
-#
-#     res = self.stub.Predict(request, 100.0)
-#     output = make_ndarray(res.outputs['output'])
-#
-#     return output
+def present(text):
+    outputs = json.loads(text)["outputs"]
+    pretty_outputs = [ { "positive": output[0], "negative": output[1], "neutral": output[2]  } for output in outputs ]
+    return json.dumps(pretty_outputs)
 
 def output_handler(data, context):
     if data.status_code != 200:
@@ -82,7 +68,8 @@ def output_handler(data, context):
 
     response_content_type = context.accept_header
     prediction = data.content
-    return prediction, response_content_type
+    return present(prediction), response_content_type
+
 
 
 if __name__ == "__main__":
