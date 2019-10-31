@@ -1,9 +1,16 @@
+import os
+import json
+import logging
+
 from tokenization import *
-import os, json
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 vocab_fp = os.path.join(os.path.dirname(__file__), "vocab.txt")
 max_seq_len = 128
 tokenizer = FullTokenizer(vocab_fp)
+log.info('Vocabulary loaded from : {}'.format(vocab_fp))
 
 def input_handler(data, context):
     """ Pre-process request input before it is sent to TensorFlow Serving REST API
@@ -15,15 +22,19 @@ def input_handler(data, context):
     """
     if context.request_content_type == 'application/json':
         body = json.loads(data.read().decode('utf-8'))
+        log.debug("Received a request with {} sentences".format(len(body["inputs"])))
+        log.debug("Received request body: {}".format(body))
         batch_ids, batch_mask, batch_seg = transform(body["inputs"])
-
-        return json.dumps({
+        tfinput = {
                    "inputs": {
                        "input_ids": batch_ids,
                        "input_mask": batch_mask,
                        "input_type_ids": batch_seg
                    }
-                })
+                  }
+        log.debug("Plain text inputs transformed into: {}".format(tfinput))
+
+        return json.dumps(tfinput)
 
 def transform(sentences):
     batch_ids = []
@@ -74,5 +85,5 @@ def output_handler(data, context):
 
 if __name__ == "__main__":
     sentences = [ "This is very good", "This is not very clear", "This is confusing" ]
-    output = preprocessing(sentences)
+    output = transform(sentences)
     print(output)
