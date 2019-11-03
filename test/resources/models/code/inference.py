@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import requests
+import time
 from tokenization import *
 
 logging.basicConfig(level=logging.INFO)
@@ -19,10 +20,17 @@ def handler(data, context):
             context (Context): an object containing request and configuration details
         Returns:
             (bytes, string): data to return to client, (optional) response content type
-        """
+    """
     processed_input = _input_handler(data, context)
-    response = requests.post(context.rest_uri, data=processed_input)
-    return _output_handler(response, context)
+    n_input = len(processed_input['inputs']['input_ids'])
+    start = time.time()
+    response = requests.post(context.rest_uri, data=json.dumps(processed_input))
+    processed_output, response_content_type = _output_handler(response, context)
+    assert n_input == len(processed_output)
+
+    logging.info("{} seconds for tfs prediction to process {} sentences".format(time.time()-start, n_input))
+
+    return json.dumps(processed_output), response_content_type
 
 def _input_handler(data, context):
     """ Pre-process request input before it is sent to TensorFlow Serving REST API
@@ -45,8 +53,7 @@ def _input_handler(data, context):
                    }
                   }
         log.debug("Plain text inputs transformed into: {}".format(tfinput))
-
-        return json.dumps(tfinput)
+        return tfinput
 
 def transform(sentences):
     batch_ids = []
@@ -83,7 +90,7 @@ def transform(sentences):
 def present(text):
     outputs = json.loads(text)["outputs"]
     pretty_outputs = [ { "positive": output[0], "negative": output[1], "neutral": output[2]  } for output in outputs ]
-    return json.dumps(pretty_outputs)
+    return pretty_outputs
 
 def _output_handler(data, context):
     if data.status_code != 200:
