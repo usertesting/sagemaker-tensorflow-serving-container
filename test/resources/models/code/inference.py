@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-
+import requests
 from tokenization import *
 
 logging.basicConfig(level=logging.INFO)
@@ -12,7 +12,19 @@ max_seq_len = 128
 tokenizer = FullTokenizer(vocab_fp)
 log.info('Vocabulary loaded from : {}'.format(vocab_fp))
 
-def input_handler(data, context):
+def handler(data, context):
+    """Handle request.
+        Args:
+            data (obj): the request data
+            context (Context): an object containing request and configuration details
+        Returns:
+            (bytes, string): data to return to client, (optional) response content type
+        """
+    processed_input = _input_handler(data, context)
+    response = requests.post(context.rest_uri, data=processed_input)
+    return _output_handler(response, context)
+
+def _input_handler(data, context):
     """ Pre-process request input before it is sent to TensorFlow Serving REST API
     Args:
         data (obj): the request data, in format of dict or string
@@ -73,7 +85,7 @@ def present(text):
     pretty_outputs = [ { "positive": output[0], "negative": output[1], "neutral": output[2]  } for output in outputs ]
     return json.dumps(pretty_outputs)
 
-def output_handler(data, context):
+def _output_handler(data, context):
     if data.status_code != 200:
         raise ValueError(data.content.decode('utf-8'))
 
