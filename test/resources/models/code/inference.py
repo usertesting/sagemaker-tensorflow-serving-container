@@ -3,7 +3,7 @@ import json
 import logging
 import requests
 import time
-from tokenization import *
+from .tokenization import *
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
